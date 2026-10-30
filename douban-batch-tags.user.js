@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣看过-批量标签助手
 // @namespace    https://github.com/rainnn-w/douban-batch-tags
-// @version      3.4
+// @version      3.5
 // @description  在豆瓣“看过”页面批量添加/移除标签：面板内电影列表勾选、片名搜索、
 //               无标签/评分/年份/已有标签筛选、预设标签、跨页加载全部条目、
 //               进度条与失败重试。以用户本人登录态提交，内置随机延迟防风控。
@@ -121,11 +121,7 @@
       <div class="bt-row"><label><input type="checkbox" id="bt-untagged"> 只看无标签</label></div>
       <div class="bt-row">已有标签筛选（点击选取，可多选）：</div>
       <div class="bt-tagpick" id="bt-tagpick"></div>
-      <div class="bt-row">评分:
-        <select id="bt-rating"><option value="">全部</option><option value="0">未评分</option>
-        ${[1,2,3,4,5].map(n=>`<option value="${n}">${n}星</option>`).join('')}</select>
-        年份 <input type="text" id="bt-ymin" size="4" placeholder="如1990"> -
-        <input type="text" id="bt-ymax" size="4" placeholder="如2000">
+      <div class="bt-row">
         <button class="bt-btn bt-mini" id="bt-clearfilter">清除筛选</button></div>
 
       <div class="bt-sec">预设标签（左键选入，右键删除）</div>
@@ -169,18 +165,14 @@
   });
 
   // ============ 筛选状态（只影响列表显示，不影响勾选） ============
-  const filterState = { untagged: false, rating: '', ymin: '', ymax: '', tags: [] };
+  const filterState = { untagged: false, tags: [] };
 
   function visibleList() {
     const kw = $('bt-search').value.trim().toLowerCase();
-    const ymin = +filterState.ymin || -Infinity, ymax = +filterState.ymax || Infinity;
-    const hasYear = filterState.ymin || filterState.ymax;
     const wantTags = filterState.tags.map(w => w.toLowerCase());
     return [...store.values()].filter(m => {
       if (kw && !m.title.toLowerCase().includes(kw)) return false;
       if (filterState.untagged && m.tags.length) return false;
-      if (filterState.rating !== '' && m.rating !== +filterState.rating) return false;
-      if (hasYear && !m.years.some(y => y >= ymin && y <= ymax)) return false;
       if (wantTags.length && !m.tags.some(t => wantTags.includes(t.toLowerCase()))) return false;
       return true;
     });
@@ -244,13 +236,9 @@
       : [...filterState.tags, tag];
     renderList();
   }
-  $('bt-rating').onchange  = e => { filterState.rating = e.target.value; renderList(); };
-  $('bt-ymin').addEventListener('input', e => { filterState.ymin = e.target.value; renderList(); });
-  $('bt-ymax').addEventListener('input', e => { filterState.ymax = e.target.value; renderList(); });
   $('bt-clearfilter').onclick = () => {
-    Object.assign(filterState, { untagged: false, rating: '', ymin: '', ymax: '', tags: [] });
-    $('bt-untagged').checked = false; $('bt-rating').value = '';
-    $('bt-ymin').value = ''; $('bt-ymax').value = '';
+    filterState.untagged = false; filterState.tags = [];
+    $('bt-untagged').checked = false;
     renderList();
   };
 
