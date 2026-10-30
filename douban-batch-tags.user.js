@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣看过-批量标签助手
 // @namespace    https://github.com/rainnn-w/douban-batch-tags
-// @version      3.3
+// @version      3.4
 // @description  在豆瓣“看过”页面批量添加/移除标签：面板内电影列表勾选、片名搜索、
 //               无标签/评分/年份/已有标签筛选、预设标签、跨页加载全部条目、
 //               进度条与失败重试。以用户本人登录态提交，内置随机延迟防风控。
@@ -104,7 +104,7 @@
   panel.innerHTML = `
     <div class="bt-head"><span>🏷️ 批量标签助手</span><span class="bt-toggle">—</span></div>
     <div class="bt-body">
-      <div class="bt-sec">电影列表（勾选要处理的）</div>
+      <div class="bt-sec">影片列表（勾选要处理的）</div>
       <div class="bt-row">
         <input type="text" id="bt-search" style="width:100%" placeholder="🔍 按片名搜索当前列表">
       </div>
@@ -209,9 +209,10 @@
 
   function updateCount() {
     const all = store.size;
+    const shown = visibleList().length;
     const sel = [...store.values()].filter(m => m.checked).length;
     const done = [...store.values()].filter(m => m.done).length;
-    $('bt-count').textContent = `共 ${all} 部 · 已选 ${sel} 部 · 已处理 ${done} 部`;
+    $('bt-count').textContent = `共 ${all} 部 · 筛选后 ${shown} 部 · 已选 ${sel} 部 · 已处理 ${done} 部`;
   }
 
   // 全选 / 反选 / 清除（作用于当前可见项）
@@ -398,7 +399,7 @@
   $('bt-run').onclick = () => {
     const list = [...store.values()].filter(m => m.checked && !m.done);
     if (!list.length) return alert('请先在列表中勾选要处理的条目');
-    if (confirm(`将处理 ${list.length} 部电影，继续？`)) runBatch(list);
+    if (confirm(`将处理 ${list.length} 部影片，继续？`)) runBatch(list);
   };
   $('bt-abort').onclick = () => abortFlag = true;
   $('bt-retry').onclick = () => {
