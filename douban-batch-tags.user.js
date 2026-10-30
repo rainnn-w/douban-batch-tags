@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         豆瓣看过-批量标签助手
 // @namespace    https://github.com/rainnn-w/douban-batch-tags
-// @version      3.5
-// @description  在豆瓣“看过”页面批量添加/移除标签：面板内电影列表勾选、片名搜索、
-//               无标签/评分/年份/已有标签筛选、预设标签、跨页加载全部条目、
+// @version      3.6
+// @description  在豆瓣“看过”页面批量添加/移除标签：面板内影片列表勾选、片名搜索、
+//               只看无标签/已有标签筛选、预设标签、跨页加载全部条目、
 //               进度条与失败重试。以用户本人登录态提交，内置随机延迟防风控。
 // @author       rainnn-w
 // @license      MIT
