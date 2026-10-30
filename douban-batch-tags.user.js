@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         豆瓣看过-批量标签助手
 // @namespace    https://github.com/rainnn-w/douban-batch-tags
-// @version      3.2
+// @version      3.3
 // @description  在豆瓣“看过”页面批量添加/移除标签：面板内电影列表勾选、片名搜索、
 //               无标签/评分/年份/已有标签筛选、预设标签、跨页加载全部条目、
 //               进度条与失败重试。以用户本人登录态提交，内置随机延迟防风控。
@@ -77,6 +77,8 @@
     .bt-chip{display:inline-block;background:#eef7ee;border:1px solid #9c9;border-radius:12px;
       padding:1px 9px;margin:2px 3px;cursor:pointer;user-select:none;}
     .bt-chip.on{background:#42bd56;color:#fff;border-color:#42bd56;}
+    .bt-tagpick{max-height:120px;overflow:auto;border:1px solid #e0ece0;border-radius:6px;padding:4px;background:#fbfdfb;}
+    .bt-chip small{opacity:.7;font-size:10px;}
     .bt-prog-wrap{height:8px;background:#e5eee5;border-radius:4px;margin-top:8px;overflow:hidden;}
     .bt-prog-bar{height:100%;width:0;background:linear-gradient(90deg,#42bd56,#072);transition:width .3s;}
     .bt-log{margin-top:6px;max-height:130px;overflow:auto;font-size:12px;color:#555;
@@ -117,7 +119,8 @@
 
       <div class="bt-sec">列表筛选（只影响显示，实时生效）</div>
       <div class="bt-row"><label><input type="checkbox" id="bt-untagged"> 只看无标签</label></div>
-      <div class="bt-row">已有标签：<input type="text" id="bt-tagfilter" style="width:100%" placeholder="空格分隔，匹配任一（如：科幻 悬疑）"></div>
+      <div class="bt-row">已有标签筛选（点击选取，可多选）：</div>
+      <div class="bt-tagpick" id="bt-tagpick"></div>
       <div class="bt-row">评分:
         <select id="bt-rating"><option value="">全部</option><option value="0">未评分</option>
         ${[1,2,3,4,5].map(n=>`<option value="${n}">${n}星</option>`).join('')}</select>
@@ -186,6 +189,7 @@
   // ============ 面板内电影列表 ============
   function renderList() {
     const list = visibleList();
+    renderTagPicker();
     $('bt-list').innerHTML = list.map(m => `
       <label class="bt-mrow ${m.done ? 'bt-done' : ''} ${m.failed ? 'bt-fail' : ''}">
         <input type="checkbox" data-id="${m.id}" ${m.checked ? 'checked' : ''} ${m.done ? 'disabled' : ''}>
@@ -217,17 +221,35 @@
 
   // ============ 列表筛选（实时生效） ============
   $('bt-untagged').onchange = e => { filterState.untagged = e.target.checked; renderList(); };
-  $('bt-tagfilter').addEventListener('input', e => {
-    filterState.tags = e.target.value.trim().split(/\s+/).filter(Boolean);
+
+  // 自动提取全部条目的现有标签，做成可点击胶囊（带数量）
+  function renderTagPicker() {
+    const counts = new Map();
+    store.forEach(m => m.tags.forEach(t => counts.set(t, (counts.get(t) || 0) + 1)));
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh'));
+    const sel = new Set(filterState.tags.map(t => t.toLowerCase()));
+    $('bt-tagpick').innerHTML = sorted.length
+      ? sorted.map(([t, c]) =>
+          `<span class="bt-chip ${sel.has(t.toLowerCase()) ? 'on' : ''}" data-t="${esc(t)}">${esc(t)}<small> ${c}</small></span>`).join('')
+      : '<span style="color:#999;font-size:12px;">（暂无标签：加载全部页后自动汇总，或先处理几部）</span>';
+    $('bt-tagpick').querySelectorAll('.bt-chip').forEach(chip => {
+      chip.onclick = () => toggleTagFilter(chip.dataset.t);
+    });
+  }
+  function toggleTagFilter(tag) {
+    const lower = tag.toLowerCase();
+    filterState.tags = filterState.tags.some(t => t.toLowerCase() === lower)
+      ? filterState.tags.filter(t => t.toLowerCase() !== lower)
+      : [...filterState.tags, tag];
     renderList();
-  });
+  }
   $('bt-rating').onchange  = e => { filterState.rating = e.target.value; renderList(); };
   $('bt-ymin').addEventListener('input', e => { filterState.ymin = e.target.value; renderList(); });
   $('bt-ymax').addEventListener('input', e => { filterState.ymax = e.target.value; renderList(); });
   $('bt-clearfilter').onclick = () => {
     Object.assign(filterState, { untagged: false, rating: '', ymin: '', ymax: '', tags: [] });
     $('bt-untagged').checked = false; $('bt-rating').value = '';
-    $('bt-ymin').value = ''; $('bt-ymax').value = ''; $('bt-tagfilter').value = '';
+    $('bt-ymin').value = ''; $('bt-ymax').value = '';
     renderList();
   };
 
