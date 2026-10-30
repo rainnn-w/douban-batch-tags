@@ -6,7 +6,7 @@
 
 1. 安装 [Tampermonkey](https://www.tampermonkey.net/) 浏览器扩展
 2. 安装本脚本（二选一）：
-   - Greasy Fork：`（发布后补充链接）`
+   - Greasy Fork：[豆瓣看过-批量标签助手](https://greasyfork.org/zh-CN/scripts/602949)
    - 直接打开 [douban-batch-tags.user.js 的 raw 链接](https://raw.githubusercontent.com/rainnn-w/douban-batch-tags/main/douban-batch-tags.user.js)，Tampermonkey 会弹出安装确认
 
 ## 功能
